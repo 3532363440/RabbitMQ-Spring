@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/rabbit
+       http://www.springframework.org/schema/rabbit/spring-rabbit.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd">
+
+        <context:component-scan base-package="com.example" />
+
+        <!--创建生产者配置  virtual-host="/-->
+        <rabbit:connection-factory id="connectionFactory" addresses="192.168.31.85:5672,192.168.31.86:5672,192.168.31.87:5672"  username="liu" password="liu" />
+        <rabbit:admin connection-factory="connectionFactory"/>
+        <!--注入rabbitTemplate 后续获取该对象发送消息-->
+<!--        <rabbit:admin id="rabbitTemplate" connection-factory="connectionFactory"/>-->
+
+        <bean id="rabbitTemplate" class="org.springframework.amqp.rabbit.core.RabbitTemplate">
+                <constructor-arg ref="connectionFactory"/>
+        </bean>
+
+        <bean id="producerMessage" class="com.example.producer.ProducerMessage">
+                <constructor-arg ref="rabbitTemplate"/>
+        </bean>
+
+        <!--
+             id  表示bean的名称
+             name 表示队列的名称
+             auto-declare 表示如果当服务器没有该队列时是否创建
+             durable 表示是否持久化到内存
+        -->
+<!--        <rabbit:queue id="aa" name="aa" auto-declare="true" />-->
+<!--        <rabbit:queue id="bb" name="bb" auto-declare="true" />-->
+
+        <!--创建 扇形（fanout） 交换机-->
+<!--        <rabbit:fanout-exchange id="fanoutExchange" name="fanout" auto-declare="true" auto-delete="true" delayed="true">-->
+<!--                &lt;!&ndash;绑定队列&ndash;&gt;-->
+<!--                <rabbit:bindings>-->
+<!--                        <rabbit:binding queue="aa"/>-->
+<!--                        <rabbit:binding queue="bb"/>-->
+<!--                </rabbit:bindings>-->
+<!--        </rabbit:fanout-exchange>-->
+
+
+
+
+        <!--创建 直连（direct） 交换机-->
+ <!--
+        <rabbit:direct-exchange id="directExchange" name="direct" auto-declare="true" auto-delete="true" delayed="true">
+                <rabbit:bindings>
+                        <rabbit:binding queue="aa" key="1"/>
+                        <rabbit:binding queue="bb" key="2"/>
+                </rabbit:bindings>
+        </rabbit:direct-exchange>
+-->
+
+        <!--创建 主题（topic） 交换机-->
+<!--
+        <rabbit:topic-exchange  id="topicExchange" name="topic" auto-declare="true" auto-delete="true" delayed="true">
+                <rabbit:bindings>
+                        <rabbit:binding queue="aa" pattern="aa.#"/>
+                        <rabbit:binding queue="bb" pattern="#.bb"/>
+                </rabbit:bindings>
+        </rabbit:topic-exchange>
+ -->
+
+        <!--创建消费者配置-->
+        <rabbit:connection-factory id="connectionFactory2" addresses="192.168.31.85:5672,192.168.31.86:5672,192.168.31.87:5672"  username="liu" password="liu"/>
+        <!--注入消费者类-->
+        <bean id="consumerMessage" class="com.example.consumer.ConsumerMessage"/>
+
+        <!-- queue-names 表示该类要监听的队列 -->
+        <rabbit:listener-container connection-factory="connectionFactory2">
+                <rabbit:listener ref="consumerMessage" queue-names="aa"/>
+        </rabbit:listener-container>
+
+
+
+
+
+</beans>
